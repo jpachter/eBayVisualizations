@@ -1,0 +1,32 @@
+[
+	{
+		"id": "sydney",
+		"address": "Sydney, AU",
+		"zoom": 12
+	},
+	{
+		"id": "london",
+		"address": "WC2E7NA",
+		"zoom": 10
+	},
+	{
+		"id": "berlin",
+		"address": "Berlin, DE",
+		"zoom": 11
+	},
+	{
+		"id": "miami",
+		"address": "Miami, FL",
+		"zoom": 10
+	},
+	{
+		"id": "nyc",
+		"address": "New York, NY",
+		"zoom": 12
+	},
+	{
+		"id": "world",
+		"address": "Pichincha, Ecuador",
+		"zoom": 1.5
+	}
+]

@@ -11,6 +11,19 @@ html
     script(type='text/javascript', src='/javascripts/easey.handlers.js')
     script(type='text/javascript', src='https://maps.googleapis.com/maps/api/js?key=AIzaSyDHk1JBBniXccptYty8nuwCASGFu_jk4g8')
     script(type='text/javascript', src='/javascripts/jquery.js')
+    script(type='text/javascript', src='/javascripts/imagesloaded.pkgd.min.js')
+
+    script(type='text/javascript', src='/javascripts/jquery-imagefill.js')
     script(type='text/javascript', src='/javascripts/map.js')
+    script(type='text/javascript', src='/javascripts/jquery.easing.1.3.js')
   body
     #map
+    each city, i in cities
+        div.area(class='#{city.id}', data-postal='#{city.address}', data-zoom='#{city.zoom}')
+            each item, j in items[city.id]
+                div.point(data-postal='#{item.postal}', data-title='#{item.title}', data-image-url='#{item.largeImageUrl}',
+                    data-current-price='#{item.currentPrice.value}', data-currency-id='#{item.currentPrice.currencyId}',
+                    data-bid-count='#{item.bidCount}')
+    div.info-module
+        div.image-container
+        p.info
