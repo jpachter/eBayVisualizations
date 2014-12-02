@@ -16,7 +16,8 @@ function getMoreItems(req, res) {
 	var options = {
 	    method: 'GET',
 	    json: true,
-	    url: common.feedsvcr + 'keyword=new&num=' + common.numItems + '&algo=highbids' + (common.cities[city].postal ? "&zip=" + common.cities[city].postal : "") + (common.cities[city].distance ? "&distance=" + common.cities[city].distance : "")
+	    url: common.feedsvcr + 'keyword=new&num=' + common.numItems + '&algo=highbids' + (common.cities[city].postal ? "&zip=" + common.cities[city].postal : "") + (common.cities[city].distance ? "&distance=" + common.cities[city].distance : ""),
+		headers: {"X-EBAY-FISNG-GEOINFO": common.cities[city].geoInfo}
 	}
 
 	console.log(options);

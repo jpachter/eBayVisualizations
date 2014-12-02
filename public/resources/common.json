@@ -1,6 +1,6 @@
 {
 	"feedsvcr": "http://localhost:8080/feedservice/visualization?",
-	"numItems" : 2,
+	"numItems" : 10,
 	"cities": {
 		"world": {
 			"address": "Pichincha, Ecuador",

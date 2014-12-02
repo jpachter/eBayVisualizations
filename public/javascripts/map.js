@@ -20,6 +20,9 @@
 	};
 
 	function populateNewCoordinates($area, data, count) {
+		if (count >= data.city.length) {
+			return;
+		}
 		var curCity = data.city[count];
 		window.setTimeout(function() {
 	    	setCoordinatesFromPoint($("<div data-postal=\"" + curCity.postal + "\"data-title=\"" + curCity.title + "\" data-image-url=\"" + curCity.largeImageUrl + "\" data-bid-count=\"" + curCity.bidCount + "\" data-price-string=\"" + curCity.priceString + "\" class=\"point\"></div>").appendTo($area));
