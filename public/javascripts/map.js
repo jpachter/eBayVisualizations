@@ -19,6 +19,14 @@
 		});
 	};
 
+	function populateNewCoordinates($area, data, count) {
+		var curCity = data.city[count];
+		window.setTimeout(function() {
+	    	setCoordinatesFromPoint($("<div data-postal=\"" + curCity.postal + "\"data-title=\"" + curCity.title + "\" data-image-url=\"" + curCity.largeImageUrl + "\" data-bid-count=\"" + curCity.bidCount + "\" data-price-string=\"" + curCity.priceString + "\" class=\"point\"></div>").appendTo($area));
+		}, count * geoCoderRequestInterval);
+		populateNewCoordinates($area, data, count+1);
+	};
+
 	function setCoordinatesFromPoint($point) {
 		if ($point.parent().hasClass('berlin')) {
 			var parentCountry = ' Germany';
@@ -84,13 +92,7 @@
 	                dataType: "JSON",
 	                url: '/city/' + $area.data('city'),
 	                success: function(data) {
-	                	var i = 0;
-	                	for (i = 0; i < data.city.length; i++) { 
-	                		var curCity = data.city[i];
-	                		window.setTimeout(function() {
-						    	setCoordinatesFromPoint($("<div data-postal=\"" + curCity.postal + "\"data-title=\"" + curCity.title + "\" data-image-url=\"" + curCity.largeImageUrl + "\" data-bid-count=\"" + curCity.bidCount + "\" data-price-string=\"" + curCity.priceString + "\" class=\"point\"></div>").appendTo($area));
-							}, i * geoCoderRequestInterval);
-						}
+	                	populateNewCoordinates($area, data, 0);
 	                },
 	                error: function(e) {
 	                    // TODO: error handling
