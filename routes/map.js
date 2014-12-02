@@ -2,10 +2,49 @@ var request = require('request'),
 	step = require('step'),
 	extend = require('util')._extend,
 	protein = require('../public/resources/protein.json'),
-	cities = require('../public/resources/cities.json');
+	common = require('../public/resources/common.json');
 
 module.exports.init = function(app){
 	app.get('/', buildMap);
+	app.get('/city/:city', getMoreItems)
+}
+
+function getMoreItems(req, res) {
+ 	var city = req.params.city; 
+       
+	// Configure the request
+	var options = {
+	    method: 'GET',
+	    json: true,
+	    url: common.feedsvcr + 'keyword=new&num=' + common.numItems + '&algo=highbids' + (common.cities[city].postal ? "&zip=" + common.cities[city].postal : "") + (common.cities[city].distance ? "&distance=" + common.cities[city].distance : "")
+	}
+
+	console.log(options);
+	var items = {};
+
+	step(
+		function getCollections() {
+		    request(options, this.parallel());
+		},
+		function renderPage(err, city) {
+		    if (!err && city.body) {
+                if (city.body && city.body.ack == 'SUCCESS') {
+                	console.log(city.body);
+                	items.city = [];
+                	for (var i in city.body.items) {
+                		if (city.body.items[i].postal) {
+							items.city.push(city.body.items[i]);
+                		}
+                	}
+                } else {
+                	console.log(err);
+                    //TODO: error handling
+	        	}
+	        }
+	        console.log(items);
+	        res.send(items);
+	    }
+	)
 }
 
 function buildMap(req, res){
@@ -17,31 +56,28 @@ function buildMap(req, res){
 	}
 
 	var worldOptions = extend({}, options);
-	worldOptions.url = 'http://localhost:8080/feedservice/visualization?keyword=new&num=10&algo=highbids';
+	worldOptions.url = common.feedsvcr + 'keyword=new&num=' + common.numItems + '&algo=highbids' + (common.cities.world.postal ? "&zip=" + common.cities.world.postal : "") + (common.cities.world.distance ? "&distance=" + common.cities.world.distance : "");
 
 	var nycOptions = extend({}, options);
-	nycOptions.url = 'http://localhost:8080/feedservice/visualization?keyword=new&zip=10016&distance=30&num=10&algo=highbids';
+	nycOptions.url = common.feedsvcr + 'keyword=new&num=' + common.numItems + '&algo=highbids' + (common.cities.nyc.postal ? "&zip=" + common.cities.nyc.postal : "") + (common.cities.nyc.distance ? "&distance=" + common.cities.nyc.distance : "");
 
 	var miamiOptions = extend({}, options);
-	miamiOptions.url = 'http://localhost:8080/feedservice/visualization?keyword=new&zip=33030&distance=60&num=10&algo=highbids';
+	miamiOptions.url = common.feedsvcr + 'keyword=new&num=' + common.numItems + '&algo=highbids' + (common.cities.miami.postal ? "&zip=" + common.cities.miami.postal : "") + (common.cities.miami.distance ? "&distance=" + common.cities.miami.distance : "");
 
 	var londonOptions = extend({}, options);
-	londonOptions.url = 'http://localhost:8080/feedservice/visualization?keyword=new&zip=WC2E7NA&distance=60&num=10&algo=highbids';
+	londonOptions.url = common.feedsvcr + 'keyword=new&num=' + common.numItems + '&algo=highbids' + (common.cities.london.postal ? "&zip=" + common.cities.london.postal : "") + (common.cities.london.distance ? "&distance=" + common.cities.london.distance : "");
 	londonOptions.headers = {};
-    londonOptions.headers["X-EBAY-REST-SITEID"] = 3;
-    londonOptions.headers["X-EBAY-FISNG-GEOINFO"] = "EBAY-GB,en-GB_GB,GBP";
+    londonOptions.headers["X-EBAY-FISNG-GEOINFO"] = common.cities.london.geoInfo;
 
 	var berlinOptions = extend({}, options);
-	berlinOptions.url = 'http://localhost:8080/feedservice/visualization?keyword=neu&zip=10178&distance=45&num=10&algo=highbids';
+	berlinOptions.url = common.feedsvcr + 'keyword=new&num=' + common.numItems + '&algo=highbids' + (common.cities.berlin.postal ? "&zip=" + common.cities.berlin.postal : "") + (common.cities.berlin.distance ? "&distance=" + common.cities.berlin.distance : "");
 	berlinOptions.headers = {};
-    berlinOptions.headers["X-EBAY-REST-SITEID"] = 77;
-    berlinOptions.headers["X-EBAY-FISNG-GEOINFO"] = "EBAY-DE,de-DE_DE,EUR";
+    berlinOptions.headers["X-EBAY-FISNG-GEOINFO"] = common.cities.berlin.geoInfo;
 	
 	var sydneyOptions = extend({}, options);
-	sydneyOptions.url = 'http://localhost:8080/feedservice/visualization?keyword=new&zip=2000&distance=30&num=10&algo=highbids';
+	sydneyOptions.url = common.feedsvcr + 'keyword=new&num=' + common.numItems + '&algo=highbids' + (common.cities.sydney.postal ? "&zip=" + common.cities.sydney.postal : "") + (common.cities.sydney.distance ? "&distance=" + common.cities.sydney.distance : "");
 	sydneyOptions.headers = {};
-    sydneyOptions.headers["X-EBAY-REST-SITEID"] = 15;
-    sydneyOptions.headers["X-EBAY-FISNG-GEOINFO"] = "EBAY-AU,en-AU_AU,AUD";
+    sydneyOptions.headers["X-EBAY-FISNG-GEOINFO"] = common.cities.sydney.geoInfo;
 
 	var items = {};
 
@@ -141,7 +177,7 @@ function buildMap(req, res){
 
 	    	res.render('map', {
 				items: items,
-				cities: cities
+				cities: common.cities
 			});
 	    }
 	)

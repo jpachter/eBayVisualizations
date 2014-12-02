@@ -1,0 +1,46 @@
+{
+	"feedsvcr": "http://localhost:8080/feedservice/visualization?",
+	"numItems" : 2,
+	"cities": {
+		"world": {
+			"address": "Pichincha, Ecuador",
+			"zoom": 3,
+			"geoInfo" : "EBAY-US,en-US_US,USD"
+		},
+		"nyc": {
+			"address": "New York, NY",
+			"postal": "10016",
+			"zoom": 12,
+			"geoInfo": "EBAY-US,en-US_US,USD",
+			"distance": 30
+		},
+		"london": {
+			"address": "London, UK",
+			"postal": "WC2E7NA",
+			"zoom": 10,
+			"geoInfo": "EBAY-GB,en-GB_GB,GBP",
+			"distance": 60
+		},
+		"miami": {
+			"address": "Miami, FL",
+			"postal": "33030",
+			"zoom": 10,
+			"geoInfo" : "EBAY-US,en-US_US,USD",
+			"distance": 60
+		},
+		"sydney": {
+			"address": "Sydney, AU",
+			"postal": "2000",
+			"zoom": 12,
+			"geoInfo": "EBAY-AU,en-AU_AU,AUD",
+			"distance": 30
+		},
+		"berlin": {
+			"address": "Berlin, DE",
+			"postal": "10178",
+			"zoom": 11,
+			"geoInfo": "EBAY-DE,de-DE_DE,EUR",
+			"distance": 45
+		}
+	}
+}

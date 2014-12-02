@@ -6,7 +6,8 @@
 		panInterval = 6500,
 		areaCount = 0,
 		itemStartDelay = 8000,
-		$window = $(window);
+		$window = $(window),
+		$points = $('.point');
 
 	function populateAllCoordinates() {
 		var count = 0;
@@ -67,7 +68,33 @@
 
 		// We're done moving through all points! Go to the next city.
 		if ($points.length <= level) {
-			panToCity();
+			$points.each(function() {
+				var $this = $(this);
+				$this.animate({
+					opacity: 0,
+				}, Math.random()*500+500, function() {
+					$this.remove();
+				});
+			});
+			window.setTimeout(function() {
+				panToCity();
+				// Add new items
+				$.ajax({
+	                type: 'GET',
+	                dataType: "JSON",
+	                url: '/city/' + $area.data('city'),
+	                success: function(data) {
+	                	var i = 0;
+	                	for (i = 0; i < data.city.length; i++) { 
+	                		var curCity = data.city[i];
+						    $area.append("<div data-postal=\"" + curCity.postal + "\"data-title=\"" + curCity.title + "\" data-image-url=\"" + curCity.largeImageUrl + "\" data-bid-count=\"" + curCity.bidCount + "\" data-price-string=\"" + curCity.priceString + "\" class=\"point\"></div>")
+						}
+	                },
+	                error: function(e) {
+	                    // TODO: error handling
+	                }
+            	});
+			}, 1000);
 			return;
 		}
 
@@ -83,14 +110,18 @@
 			return;
 		}
 
-		var $infoModule = $('.info-module'),
+		var $infoModule = $('.info-module').first(),
 			$infoImageContainer = $('.image-container', $infoModule),
-			$infoText = $('p', $infoModule);
+			$infoText = $('p', $infoModule),
+			$scroller = $('.scroller');
 
 		$infoImageContainer.html('<img src=\'' + $currentPoint.data('imageUrl') + '\'>')
 		$infoImageContainer.imagefill();
-		// Imagefill shows some jerkiness so push the fadein back a bit
-		window.setTimeout(function() {
+		$infoText.html($currentPoint.data('bidCount') + ' bids<br>' +
+			$currentPoint.data('priceString'));
+
+		$infoImageContainer.imagesLoaded().done(function(img) {
+
 			$infoModule.animate({
 				opacity: 1
 			}, 200, 'linear');
@@ -103,7 +134,6 @@
 				top: $currentPoint.position().top - 200
 			}, 700, 'easeOutQuint', function() {
 
-				var transitionTime = Math.floor(Math.random()*2500 + 2500);
 				$currentPoint.animate({
 					width: 25,
 					height: 25,
@@ -112,19 +142,24 @@
 					top: $currentPoint.position().top + 200
 				}, 500, 'easeInQuint');
 				$currentPoint.animate({
-					opacity: 0
-				}, transitionTime, 'linear');
+					opacity: .6
+				}, 4000, 'linear');
 				$infoModule.animate( {
-					opacity: 0
-				}, transitionTime, 'linear');
-				window.setTimeout(function() {
+					opacity: .6
+				}, 4000, 'linear');
+				$scroller.animate( {
+					left: 350
+				}, 4000, 'linear', function() {
+					$scroller.removeAttr('style');
+					$infoModule.clone().removeAttr('style').insertBefore($infoModule);
 					moveThroughItems($area, level+1);
-				}, transitionTime);
+				});
 		 	});
-		}, 200);
-			
-		$infoText.html($currentPoint.data('bidCount') + ' bids<br>' +
-			$currentPoint.data('currencyId') + ' ' + $currentPoint.data('currentPrice'));
+		});
+
+		
+		
+		
 	};
 
 	$(document).ready(function() {

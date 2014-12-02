@@ -16,12 +16,11 @@ html, body, #map {
 
 .info-module {
 	opacity: 0;
-	position: fixed;
-	bottom: 10px;
-	left: 10px;
+	display: inline-block;
 	background-color: #FFF;
 	border: 1px solid #666;
 	padding: 15px;
+	margin-right: 10px;
 }
 
 .image-container {
@@ -32,4 +31,11 @@ html, body, #map {
 p.info {
 	font-weight: bold;
 	margin: 10px 0 0;
+}
+
+.scroller {
+	position: absolute;
+	bottom: 10px;
+	left: 10px;
+	white-space: nowrap;
 }
