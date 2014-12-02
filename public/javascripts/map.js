@@ -87,7 +87,9 @@
 	                	var i = 0;
 	                	for (i = 0; i < data.city.length; i++) { 
 	                		var curCity = data.city[i];
-						    $area.append("<div data-postal=\"" + curCity.postal + "\"data-title=\"" + curCity.title + "\" data-image-url=\"" + curCity.largeImageUrl + "\" data-bid-count=\"" + curCity.bidCount + "\" data-price-string=\"" + curCity.priceString + "\" class=\"point\"></div>")
+	                		window.setTimeout(function() {
+						    	setCoordinatesFromPoint($("<div data-postal=\"" + curCity.postal + "\"data-title=\"" + curCity.title + "\" data-image-url=\"" + curCity.largeImageUrl + "\" data-bid-count=\"" + curCity.bidCount + "\" data-price-string=\"" + curCity.priceString + "\" class=\"point\"></div>").appendTo($area));
+							}, i * geoCoderRequestInterval);
 						}
 	                },
 	                error: function(e) {
