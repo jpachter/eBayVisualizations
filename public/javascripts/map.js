@@ -1,6 +1,6 @@
 (function($){
 	var geocoder = new google.maps.Geocoder(),
-		geoCoderRequestInterval = 1000,
+		geoCoderRequestInterval = 1500,
 		numGeocoded = 0,
 		map,
 		panInterval = 6500,
@@ -8,27 +8,23 @@
 		itemStartDelay = 9000,
 		$window = $(window),
 		$points = $('.point'),
-		rotationNum = 0;
+		rotationNum = 0,
+		geoCoderQueue = [];
 
 	function populateAllCoordinates() {
-		var count = 0;
 		$('.point, .area').each(function() {
 			var $this = $(this);
-			window.setTimeout(function() {
-				setCoordinatesFromPoint($this);
-			}, count++ * geoCoderRequestInterval);
+			geoCoderQueue.push($this);
 		});
+		setCoordinates();
 	};
 
-	function populateNewCoordinates($area, data, count) {
-		if (count >= data.city.length) {
-			return;
-		}
-		var curCity = data.city[count];
-		window.setTimeout(function() {
-	    	setCoordinatesFromPoint($("<div data-postal=\"" + curCity.postal + "\"data-watch-count=\"" + curCity.watchCount +  "\"data-title=\"" + curCity.title + "\" data-image-url=\"" + curCity.largeImageUrl + "\" data-bid-count=\"" + curCity.bidCount + "\" data-price-string=\"" + curCity.priceString + "\" class=\"point\"></div>").appendTo($area));
-		}, count * geoCoderRequestInterval);
-		populateNewCoordinates($area, data, count+1);
+	function setCoordinates() {
+		window.setInterval(function() {
+			if (geoCoderQueue.length) {
+				setCoordinatesFromPoint(geoCoderQueue.shift());
+			}
+		}, geoCoderRequestInterval);
 	};
 
 	function setCoordinatesFromPoint($point) {
@@ -43,14 +39,14 @@
 				$point.data('lat', results[0].geometry.location.k);
 				$point.data('lon', results[0].geometry.location.B);
 				numGeocoded++;
-				console.log('Geocode success!');
+				//console.log('Geocode success!');
 			} else if (status === google.maps.GeocoderStatus.OVER_QUERY_LIMIT) {    
-			  	console.log('Geocode was not successful for the following reason: ' + status + '. Retrying after ' + geoCoderRequestInterval + ' ms.');
+			  	//console.log('Geocode was not successful for the following reason: ' + status + '. Retrying after ' + geoCoderRequestInterval + ' ms.');
 			  	window.setTimeout(function() {
 			  		setCoordinatesFromPoint($point);
 			  	}, geoCoderRequestInterval);
 	        } else {
-			  console.log('Geocode was not successful for the following reason: ' + status);
+			  //console.log('Geocode was not successful for the following reason: ' + status);
 			  numGeocoded++;
 			}
 		});
@@ -97,7 +93,12 @@
 	                dataType: "JSON",
 	                url: '/city/' + $area.data('city') + '?algo=' + (rotationNum % 2 == 0 ? 'highwatches' : 'highbids'),
 	                success: function(data) {
-	                	populateNewCoordinates($area, data, 0);
+						for (i = 0; i < data.city.length; i++) {
+							var curCity = data.city[i];
+							geoCoderQueue.push($("<div data-postal=\"" + curCity.postal + "\"data-watch-count=\"" + curCity.watchCount +  "\"data-title=\"" 
+							+ curCity.title + "\" data-image-url=\"" + curCity.largeImageUrl + "\" data-bid-count=\"" + curCity.bidCount + "\" data-price-string=\"" 
+							+ curCity.priceString + "\" class=\"point\"></div>").appendTo($area));;
+						}
 	                },
 	                error: function(e) {
 	                    // TODO: error handling
@@ -171,10 +172,6 @@
 				});
 		 	});
 		});
-
-		
-		
-		
 	};
 
 	$(document).ready(function() {
