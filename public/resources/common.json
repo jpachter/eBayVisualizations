@@ -1,6 +1,7 @@
 {
-	"feedsvcr": "http://localhost:8080/feedservice/visualization?",
-	"numItems" : 10,
+	"feedsvcrDev": "http://localhost:8080/feedservice/visualization?",
+	"feedsvcr": "http://visualizations-5990.lvs01.dev.ebayc3.com:8080/feedservice/visualization?",
+	"numItems" : 20,
 	"cities": {
 		"world": {
 			"address": "Pichincha, Ecuador",

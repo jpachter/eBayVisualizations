@@ -17,12 +17,14 @@ html
     script(type='text/javascript', src='/javascripts/map.js')
     script(type='text/javascript', src='/javascripts/jquery.easing.1.3.js')
   body
+    #header
+        img.logo(src="http://p.ebaystatic.com/aw/home/visualizations/ebay_tm_rgb.svg")
     #map
     each city, i in cities
         div.area(class='#{i}', data-city='#{i}', data-zoom='#{city.zoom}', data-postal='#{city.address}')
             each item, j in items[i]
                 div.point(data-postal='#{item.postal}', data-title='#{item.title}', data-image-url='#{item.largeImageUrl}',
-                    data-bid-count='#{item.bidCount}' data-price-string='#{item.priceString}')
+                    data-bid-count='#{item.bidCount}' data-price-string='#{item.priceString}', data-watch-count='#{item.watchCount}')
     div.scroller
         div.info-module
             div.image-container

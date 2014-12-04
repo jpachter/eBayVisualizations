@@ -6,21 +6,21 @@ var request = require('request'),
 
 module.exports.init = function(app){
 	app.get('/', buildMap);
-	app.get('/city/:city', getMoreItems)
+	app.get('/city/:city?', getMoreItems)
 }
 
 function getMoreItems(req, res) {
- 	var city = req.params.city; 
-       
+ 	var city = req.params.city,
+ 		algo = req.query.algo;
+ 		
 	// Configure the request
 	var options = {
 	    method: 'GET',
 	    json: true,
-	    url: common.feedsvcr + 'keyword=new&num=' + common.numItems + '&algo=highbids' + (common.cities[city].postal ? "&zip=" + common.cities[city].postal : "") + (common.cities[city].distance ? "&distance=" + common.cities[city].distance : ""),
+	    url: common.feedsvcr + 'keyword=new&num=' + common.numItems + '&algo=' + algo + (common.cities[city].postal ? "&zip=" + common.cities[city].postal : "") + (common.cities[city].distance ? "&distance=" + common.cities[city].distance : ""),
 		headers: {"X-EBAY-FISNG-GEOINFO": common.cities[city].geoInfo}
 	}
 
-	console.log(options);
 	var items = {};
 
 	step(
@@ -30,7 +30,6 @@ function getMoreItems(req, res) {
 		function renderPage(err, city) {
 		    if (!err && city.body) {
                 if (city.body && city.body.ack == 'SUCCESS') {
-                	console.log(city.body);
                 	items.city = [];
                 	for (var i in city.body.items) {
                 		if (city.body.items[i].postal) {
@@ -42,7 +41,6 @@ function getMoreItems(req, res) {
                     //TODO: error handling
 	        	}
 	        }
-	        console.log(items);
 	        res.send(items);
 	    }
 	)

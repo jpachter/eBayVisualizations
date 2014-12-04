@@ -1,13 +1,14 @@
 (function($){
 	var geocoder = new google.maps.Geocoder(),
-		geoCoderRequestInterval = 800,
+		geoCoderRequestInterval = 1000,
 		numGeocoded = 0,
 		map,
 		panInterval = 6500,
 		areaCount = 0,
-		itemStartDelay = 8000,
+		itemStartDelay = 9000,
 		$window = $(window),
-		$points = $('.point');
+		$points = $('.point'),
+		rotationNum = 0;
 
 	function populateAllCoordinates() {
 		var count = 0;
@@ -25,7 +26,7 @@
 		}
 		var curCity = data.city[count];
 		window.setTimeout(function() {
-	    	setCoordinatesFromPoint($("<div data-postal=\"" + curCity.postal + "\"data-title=\"" + curCity.title + "\" data-image-url=\"" + curCity.largeImageUrl + "\" data-bid-count=\"" + curCity.bidCount + "\" data-price-string=\"" + curCity.priceString + "\" class=\"point\"></div>").appendTo($area));
+	    	setCoordinatesFromPoint($("<div data-postal=\"" + curCity.postal + "\"data-watch-count=\"" + curCity.watchCount +  "\"data-title=\"" + curCity.title + "\" data-image-url=\"" + curCity.largeImageUrl + "\" data-bid-count=\"" + curCity.bidCount + "\" data-price-string=\"" + curCity.priceString + "\" class=\"point\"></div>").appendTo($area));
 		}, count * geoCoderRequestInterval);
 		populateNewCoordinates($area, data, count+1);
 	};
@@ -63,6 +64,7 @@
     	if (++areaCount == $areas.length) {
     		areaCount = 0;
     	}
+
 		easey().map(map)
 			.to(map.locationCoordinate({lat: $nextArea.data('lat'), lon: $nextArea.data('lon')}))
 			.zoom($nextArea.data('zoom'))
@@ -93,7 +95,7 @@
 				$.ajax({
 	                type: 'GET',
 	                dataType: "JSON",
-	                url: '/city/' + $area.data('city'),
+	                url: '/city/' + $area.data('city') + '?algo=' + (rotationNum % 2 == 0 ? 'highwatches' : 'highbids'),
 	                success: function(data) {
 	                	populateNewCoordinates($area, data, 0);
 	                },
@@ -101,6 +103,9 @@
 	                    // TODO: error handling
 	                }
             	});
+            	if (areaCount == 1) {
+            		rotationNum++;
+            	}
 			}, 1000);
 			return;
 		}
@@ -124,8 +129,8 @@
 
 		$infoImageContainer.html('<img src=\'' + $currentPoint.data('imageUrl') + '\'>')
 		$infoImageContainer.imagefill();
-		$infoText.html($currentPoint.data('bidCount') + ' bids<br>' +
-			$currentPoint.data('priceString'));
+		$infoText.html((rotationNum % 2 == 0 ? $currentPoint.data('bidCount') + ' bids' : $currentPoint.data('watchCount') + ' watches')
+			+ '<br>' + $currentPoint.data('priceString'));
 
 		$infoImageContainer.imagesLoaded().done(function(img) {
 
@@ -159,6 +164,9 @@
 				}, 4000, 'linear', function() {
 					$scroller.removeAttr('style');
 					$infoModule.clone().removeAttr('style').insertBefore($infoModule);
+					if ($scroller.children().size() >= 10) {
+						$scroller.children().last().remove();
+					}
 					moveThroughItems($area, level+1);
 				});
 		 	});
