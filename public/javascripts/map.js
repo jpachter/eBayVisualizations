@@ -1,11 +1,11 @@
 (function($){
 	var geocoder = new google.maps.Geocoder(),
-		geoCoderRequestInterval = 4000,
+		geoCoderRequestInterval = 3000,
 		numGeocoded = 0,
 		map,
-		panInterval = 6500,
 		areaCount = 0,
 		itemStartDelay = 9000,
+		maxGeoCodes = 10000,
 		$window = $(window),
 		$points = $('.point'),
 		rotationNum = 0,
@@ -13,19 +13,27 @@
 		foursquareClientId = 'K4MJYJ1BYS3SQ2PMZAXWJHBYV3CCPNWFJKIJDKPZ2OGEOUZQ',
 		foursquareClientSecret = 'NZTFWDE3OYSWXTLMLTWEGDHWGVHPABIQ2HCBNL2WV1OY1PFP',
 		foursquareVersion = '20141204',
-		cachedGeoCodes = {};
+		cachedGeoCodes = {},
+		initialPointNum = 0;
 
-	function populateAllCoordinates() {
+	/*
+	*	Queues up all points from initial load to be geocoded
+	*/
+	function populateInitialCoordinates() {
 		$('.point, .area').each(function() {
-			var $this = $(this);
-			geoCoderQueue.push($this);
+			geoCoderQueue.push($(this));
+			initialPointNum++;
 		});
 		setCoordinates();
 	};
 
+	/*
+	*	Every geoCoderRequestInterval miliseconds, if there is a point queued
+	*	in geoCoderQueue, we pop it and set its coordinates from a geocoding service
+	*/
 	function setCoordinates() {
 		window.setInterval(function() {
-			if (numGeocoded > 10000) {
+			if (numGeocoded > maxGeoCodes) {
 				numGeocoded = 0;
 				cachedGeoCodes = {};
 			}
@@ -35,6 +43,9 @@
 		}, geoCoderRequestInterval);
 	};
 
+	/*
+	*	Puts the given lat/lon pair in the cache with key.
+	*/
 	function putGeocodeCache(key, lat, lon) {
 		var cached = {};
 		cached.lat = lat;
@@ -42,34 +53,45 @@
 		cachedGeoCodes[key] = cached;
 	}
 
-	function setCoordinatesFromPoint($point) {
+	function getCacheKeyFromPoint($point) {
+		// It's helpful to the geocoding services to include the original country they're from with their postal code.
 		var $country = $point.hasClass('point') ? $point.parent() : $point,
 			country = ($country.data('country') && $country.data('country') != 'undefined' ? ' ' + $country.data('country') : '');
+		return $point.data('postal') + country;
+	}
 
-		if (cachedGeoCodes[$point.data('postal') + country]) {
-			var cached = cachedGeoCodes[$point.data('postal') + country];
+	/*
+	*	Given point $point, we make a lookup to Foursquare's venues API to set it's lat/lon pair.
+	*	If this call fails, we use Google's geocoding service.
+	*/
+	function setCoordinatesFromPoint($point) {
+		var cacheKey = getCacheKeyFromPoint($point);
+
+		// Check our cache. If we've already found this location's lat long, just return it.
+		if (cachedGeoCodes[cacheKey]) {
+			var cached = cachedGeoCodes[cacheKey];
 			$point.data('lat', cached.lat);
 			$point.data('lon', cached.lon);
 			return;
 		}
 
 		$.ajax({
-		  url: 'https://api.foursquare.com/v2/venues/search?near=' + $point.data('postal') + country
+		  url: 'https://api.foursquare.com/v2/venues/search?near=' + cacheKey
 		  			+ '&limit=1&client_id=' + foursquareClientId + '&client_secret=' + foursquareClientSecret + '&v=' + foursquareVersion,
 		  success: function(data){
 		  	//console.log('Foursquare Geocode success!');
 			$point.data('lat', data.response.geocode.feature.geometry.center.lat);
 			$point.data('lon', data.response.geocode.feature.geometry.center.lng);
-			putGeocodeCache($point.data('postal') + country, data.response.geocode.feature.geometry.center.lat, data.response.geocode.feature.geometry.center.lng);
+			putGeocodeCache(cacheKey, data.response.geocode.feature.geometry.center.lat, data.response.geocode.feature.geometry.center.lng);
 			numGeocoded++;
 		  },
 		  error: function (xhr, ajaxOptions, thrownError) {
 			  	//console.log('Foursquare failed. Falling back to Google for the big guns.');
-		        geocoder.geocode( { 'address': '' + $point.data('postal') + country}, function(results, status) {
+		        geocoder.geocode( { 'address': '' + cacheKey}, function(results, status) {
 					if (status == google.maps.GeocoderStatus.OK) {
 						$point.data('lat', results[0].geometry.location.k);
 						$point.data('lon', results[0].geometry.location.B);
-						putGeocodeCache($point.data('postal') + country, results[0].geometry.location.k, results[0].geometry.location.B);
+						putGeocodeCache(cacheKey, results[0].geometry.location.k, results[0].geometry.location.B);
 						numGeocoded++;
 						//console.log('Google Geocode success!');
 					} else if (status === google.maps.GeocoderStatus.OVER_QUERY_LIMIT) {    
@@ -79,13 +101,15 @@
 					  	}, geoCoderRequestInterval);
 			        } else {
 					  //console.log('Geocode was not successful for the following reason: ' + status);
-					  numGeocoded++;
 					}
 				});
 			}    
 		});
 	};
 
+	/*
+	*	Pans the map to the next location and triggers moveThroughItems which then pops all the $points on the map
+	*/
 	function panToCity() {
     	// Find next city to pan to
     	var $areas = $('.area'),
@@ -139,7 +163,9 @@
 	                }
             	});
             	if (areaCount == 1) {
-            		if (++rotationNum == 50) {
+            		// Either after 50 rotations or if the geoCoderQueue length is more than the initial load, 
+            		// reload the page to reset
+            		if (++rotationNum == 50 || geoCoderQueue.length > initialPointNum) {
             			location.reload();
             		}
             	}
@@ -193,13 +219,13 @@
 				}, 500, 'easeInQuint');
 				$currentPoint.animate({
 					opacity: .6
-				}, 5000, 'linear');
+				}, 6000, 'linear');
 				$infoModule.animate( {
 					opacity: .6
-				}, 5000, 'linear');
+				}, 6000, 'linear');
 				$scroller.animate( {
 					left: 350
-				}, 5000, 'linear', function() {
+				}, 6000, 'linear', function() {
 					$scroller.removeAttr('style');
 					$infoModule.clone().removeAttr('style').insertBefore($infoModule);
 					if ($scroller.children().size() >= 10) {
@@ -211,20 +237,25 @@
 		});
 	};
 
-	$(document).ready(function() {
-		var template = 'http://{S}tiles.mapbox.com/v3/examples.map-i86l3621/{Z}/{X}/{Y}.png';
-		var subdomains = [ 'a.', 'b.' ];
-		var provider = new MM.TemplatedLayer(template, subdomains);
+	// Document ready
+	$(function() {
+		var template = 'http://{S}tiles.mapbox.com/v4/jpachter.k1792age/{Z}/{X}/{Y}.png?access_token=pk.eyJ1IjoianBhY2h0ZXIiLCJhIjoibVlDbmVVRSJ9.SoPAIDmY-qn-Gn6mcgXlXg',
+			subdomains = [ 'a.', 'b.', 'c.', 'd.'],
+			provider = new MM.TemplatedLayer(template, subdomains);
 		map = new MM.Map('map', provider);
+		
 		// Set default location at Pinchincha, Ecuador
 		easey().map(map)
 			.to(map.locationCoordinate({lat: -0.171, lon: -78.598}))
 			.zoom(3)
 			.optimal();
 
-		populateAllCoordinates();
+		populateInitialCoordinates();
+
+		// Start the animations after two geoCodes because we need the first
+		// city and the first point set 
 		var startTimer = window.setInterval(function() {
-			if (numGeocoded > 2) {
+			if (numGeocoded >= 2) {
 				panToCity();
 				window.clearInterval(startTimer);
 			}
