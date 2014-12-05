@@ -1,6 +1,6 @@
 (function($){
 	var geocoder = new google.maps.Geocoder(),
-		geoCoderRequestInterval = 1500,
+		geoCoderRequestInterval = 4000,
 		numGeocoded = 0,
 		map,
 		panInterval = 6500,
@@ -9,7 +9,11 @@
 		$window = $(window),
 		$points = $('.point'),
 		rotationNum = 0,
-		geoCoderQueue = [];
+		geoCoderQueue = [],
+		foursquareClientId = 'K4MJYJ1BYS3SQ2PMZAXWJHBYV3CCPNWFJKIJDKPZ2OGEOUZQ',
+		foursquareClientSecret = 'NZTFWDE3OYSWXTLMLTWEGDHWGVHPABIQ2HCBNL2WV1OY1PFP',
+		foursquareVersion = '20141204',
+		cachedGeoCodes = {};
 
 	function populateAllCoordinates() {
 		$('.point, .area').each(function() {
@@ -21,34 +25,64 @@
 
 	function setCoordinates() {
 		window.setInterval(function() {
+			if (numGeocoded > 10000) {
+				numGeocoded = 0;
+				cachedGeoCodes = {};
+			}
 			if (geoCoderQueue.length) {
 				setCoordinatesFromPoint(geoCoderQueue.shift());
 			}
 		}, geoCoderRequestInterval);
 	};
 
+	function putGeocodeCache(key, lat, lon) {
+		var cached = {};
+		cached.lat = lat;
+		cached.lon = lon;
+		cachedGeoCodes[key] = cached;
+	}
+
 	function setCoordinatesFromPoint($point) {
-		if ($point.parent().hasClass('berlin')) {
-			var parentCountry = ' Germany';
+		var $country = $point.hasClass('point') ? $point.parent() : $point,
+			country = ($country.data('country') && $country.data('country') != 'undefined' ? ' ' + $country.data('country') : '');
+
+		if (cachedGeoCodes[$point.data('postal') + country]) {
+			var cached = cachedGeoCodes[$point.data('postal') + country];
+			$point.data('lat', cached.lat);
+			$point.data('lon', cached.lon);
+			return;
 		}
-		if ($point.parent().hasClass('sydney')) {
-			var parentCountry = ' Australia';
-		}
-		geocoder.geocode( { 'address': '' + $point.data('postal') + (parentCountry ? parentCountry : '')}, function(results, status) {
-			if (status == google.maps.GeocoderStatus.OK) {
-				$point.data('lat', results[0].geometry.location.k);
-				$point.data('lon', results[0].geometry.location.B);
-				numGeocoded++;
-				//console.log('Geocode success!');
-			} else if (status === google.maps.GeocoderStatus.OVER_QUERY_LIMIT) {    
-			  	//console.log('Geocode was not successful for the following reason: ' + status + '. Retrying after ' + geoCoderRequestInterval + ' ms.');
-			  	window.setTimeout(function() {
-			  		setCoordinatesFromPoint($point);
-			  	}, geoCoderRequestInterval);
-	        } else {
-			  //console.log('Geocode was not successful for the following reason: ' + status);
-			  numGeocoded++;
-			}
+
+		$.ajax({
+		  url: 'https://api.foursquare.com/v2/venues/search?near=' + $point.data('postal') + country
+		  			+ '&limit=1&client_id=' + foursquareClientId + '&client_secret=' + foursquareClientSecret + '&v=' + foursquareVersion,
+		  success: function(data){
+		  	//console.log('Foursquare Geocode success!');
+			$point.data('lat', data.response.geocode.feature.geometry.center.lat);
+			$point.data('lon', data.response.geocode.feature.geometry.center.lng);
+			putGeocodeCache($point.data('postal') + country, data.response.geocode.feature.geometry.center.lat, data.response.geocode.feature.geometry.center.lng);
+			numGeocoded++;
+		  },
+		  error: function (xhr, ajaxOptions, thrownError) {
+			  	//console.log('Foursquare failed. Falling back to Google for the big guns.');
+		        geocoder.geocode( { 'address': '' + $point.data('postal') + country}, function(results, status) {
+					if (status == google.maps.GeocoderStatus.OK) {
+						$point.data('lat', results[0].geometry.location.k);
+						$point.data('lon', results[0].geometry.location.B);
+						putGeocodeCache($point.data('postal') + country, results[0].geometry.location.k, results[0].geometry.location.B);
+						numGeocoded++;
+						//console.log('Google Geocode success!');
+					} else if (status === google.maps.GeocoderStatus.OVER_QUERY_LIMIT) {    
+					  	//console.log('Geocode was not successful for the following reason: ' + status + '. Retrying after ' + geoCoderRequestInterval + ' ms.');
+					  	window.setTimeout(function() {
+					  		setCoordinatesFromPoint($point);
+					  	}, geoCoderRequestInterval);
+			        } else {
+					  //console.log('Geocode was not successful for the following reason: ' + status);
+					  numGeocoded++;
+					}
+				});
+			}    
 		});
 	};
 
@@ -156,13 +190,13 @@
 				}, 500, 'easeInQuint');
 				$currentPoint.animate({
 					opacity: .6
-				}, 4000, 'linear');
+				}, 5000, 'linear');
 				$infoModule.animate( {
 					opacity: .6
-				}, 4000, 'linear');
+				}, 5000, 'linear');
 				$scroller.animate( {
 					left: 350
-				}, 4000, 'linear', function() {
+				}, 5000, 'linear', function() {
 					$scroller.removeAttr('style');
 					$infoModule.clone().removeAttr('style').insertBefore($infoModule);
 					if ($scroller.children().size() >= 10) {
@@ -181,7 +215,7 @@
 		map = new MM.Map('map', provider);
 		populateAllCoordinates();
 		var startTimer = window.setInterval(function() {
-			if (numGeocoded >= $('.area').first().children().length) {
+			if (numGeocoded > 10) {
 				panToCity();
 				window.clearInterval(startTimer);
 			}

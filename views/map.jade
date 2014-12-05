@@ -21,7 +21,7 @@ html
         img.logo(src="http://p.ebaystatic.com/aw/home/visualizations/ebay_tm_rgb.svg")
     #map
     each city, i in cities
-        div.area(class='#{i}', data-city='#{i}', data-zoom='#{city.zoom}', data-postal='#{city.address}')
+        div.area(class='#{i}', data-city='#{i}', data-zoom='#{city.zoom}', data-postal='#{city.address}', data-country='#{city.country}')
             each item, j in items[i]
                 div.point(data-postal='#{item.postal}', data-title='#{item.title}', data-image-url='#{item.largeImageUrl}',
                     data-bid-count='#{item.bidCount}' data-price-string='#{item.priceString}', data-watch-count='#{item.watchCount}')
