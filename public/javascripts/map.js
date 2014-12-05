@@ -139,7 +139,9 @@
 	                }
             	});
             	if (areaCount == 1) {
-            		rotationNum++;
+            		if (++rotationNum == 50) {
+            			location.reload();
+            		}
             	}
 			}, 1000);
 			return;
@@ -152,7 +154,8 @@
 
 		// If element is off screen, skip it.
 		if ($currentPoint.position().left < 0 || $currentPoint.position().left > $window.width()
-			|| $currentPoint.position().top < 0 || $currentPoint.position().top > $window.height()) {
+			|| $currentPoint.position().top < 0 || $currentPoint.position().top > $window.height()
+			|| !$currentPoint.data('lat')) {
 			moveThroughItems($area, level+1);
 			return;
 		}
@@ -213,9 +216,15 @@
 		var subdomains = [ 'a.', 'b.' ];
 		var provider = new MM.TemplatedLayer(template, subdomains);
 		map = new MM.Map('map', provider);
+		// Set default location at Pinchincha, Ecuador
+		easey().map(map)
+			.to(map.locationCoordinate({lat: -0.171, lon: -78.598}))
+			.zoom(3)
+			.optimal();
+
 		populateAllCoordinates();
 		var startTimer = window.setInterval(function() {
-			if (numGeocoded > 10) {
+			if (numGeocoded > 2) {
 				panToCity();
 				window.clearInterval(startTimer);
 			}
