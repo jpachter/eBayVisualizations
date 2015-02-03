@@ -89,8 +89,8 @@
 			  	//console.log('Foursquare failed. Falling back to Google for the big guns.');
 		        geocoder.geocode( { 'address': '' + cacheKey}, function(results, status) {
 					if (status == google.maps.GeocoderStatus.OK) {
-						$point.data('lat', results[0].geometry.location.k);
-						$point.data('lon', results[0].geometry.location.B);
+						$point.data('lat', results[0].geometry.location.lat());
+						$point.data('lon', results[0].geometry.location.lng());
 						putGeocodeCache(cacheKey, results[0].geometry.location.k, results[0].geometry.location.B);
 						numGeocoded++;
 						//console.log('Google Geocode success!');
@@ -179,8 +179,8 @@
 		$currentPoint.css('top', screenPoint.y - 12.5);
 
 		// If element is off screen, skip it.
-		if ($currentPoint.position().left < 0 || $currentPoint.position().left > $window.width()
-			|| $currentPoint.position().top < 0 || $currentPoint.position().top > $window.height()
+		if ($currentPoint.position().left <= 0 || $currentPoint.position().left >= $window.width()
+			|| $currentPoint.position().top <= 0 || $currentPoint.position().top >= $window.height()
 			|| !$currentPoint.data('lat')) {
 			moveThroughItems($area, level+1);
 			return;
