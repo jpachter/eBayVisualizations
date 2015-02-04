@@ -12,6 +12,7 @@ html, body, #map {
 	height: 25px;
 	border-radius: 50%;
 	background: -webkit-radial-gradient(center, ellipse cover, rgba(132,185,0,1) 0%,rgba(246,175,0,1) 36%,rgba(0,96,212,1) 45%,rgba(231,46,48,1) 75%);
+	background: -ms-radial-gradient(center, ellipse cover, rgba(132,185,0,1) 0%,rgba(246,175,0,1) 36%,rgba(0,96,212,1) 45%,rgba(231,46,48,1) 75%);
 }
 
 .info-module {
