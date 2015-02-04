@@ -247,7 +247,7 @@
 		// Set default location at Pinchincha, Ecuador
 		easey().map(map)
 			.to(map.locationCoordinate({lat: -0.171, lon: -78.598}))
-			.zoom(3)
+			.zoom(2)
 			.optimal();
 
 		populateInitialCoordinates();
