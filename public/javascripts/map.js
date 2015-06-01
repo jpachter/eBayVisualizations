@@ -165,7 +165,7 @@
             	if (areaCount == 1) {
             		// Either after 25 rotations or if the geoCoderQueue length is more than the initial load, 
             		// reload the page to reset
-            		if (++rotationNum == 25 || geoCoderQueue.length > initialPointNum) {
+            		if (++rotationNum == 10 || geoCoderQueue.length > initialPointNum) {
             			location.reload();
             		}
             	}
